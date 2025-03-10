@@ -1,9 +1,10 @@
-from vllm import LLM, SamplingParams
-from tqdm import tqdm
 import argparse
 import json
 import os
 import re
+
+from vllm import LLM, SamplingParams
+from tqdm import tqdm
 
 
 # Define a function to read from jsonl file
@@ -30,26 +31,23 @@ def get_wrong_count(text):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default='results/gen_model__pairs_nuclear-education-think-qa_test__gemma-2-9b-it.jsonl')
+    parser.add_argument('--data', type=str, default='results/ko-gemma-2-9b-it-v2__pairs_ko_question__result.jsonl')
     parser.add_argument('--output', type=str, default='results_kgrammar/')
     args = parser.parse_args()
     print(args)
 
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
+    data_list = read_jsonl(args.data)
 
-    output_file_path = args.output + args.data.split('/')[-1].replace("gen_model", "kgrammar")
-    if os.path.dirname(args.data).endswith('norag'):
-        output_file_path = os.path.splitext(output_file_path)[0] + '__norag.jsonl'
+    os.makedirs(args.output, exist_ok=True)
+
+    output_file_path = args.output + args.data.split('/')[-1].replace("__result.jsonl", "__kgrammar.jsonl")
 
     llm = LLM(model='davidkim205/kgrammar-2-9b', max_model_len=4096)
     sampling_params = SamplingParams(max_tokens=2048, temperature=0.8)
 
-    input_file_path = args.data
-    data_list = read_jsonl(input_file_path)
-
     judge_grammar = "한국어 문맥상 부자연스러운 부분을 찾으시오. 오류 문장과 개수는 <incorrect grammar> </incorrect grammar> tag, 즉 <incorrect grammar> - 오류 문장과 설명 </incorrect grammar> 안에 담겨 있으며, <wrong count> </wrong count> tag, 즉 <wrong count> 오류 개수 </wrong count> 이다."
-    is_first=True
+    
+    f = open(output_file_path, mode='w')
     for item in tqdm(data_list):
         for pair in item["pairs"]:
             conversation = [
@@ -63,12 +61,9 @@ def main():
             answer = outputs[0].outputs[0].text
             pair["kgrammar"] = answer
 
-        if is_first:
-            mode='w'
-            is_first=False
-        else:
-            mode='a'
-        write_jsonl(output_file_path, item, mode)
+        f.write(json.dumps(item, ensure_ascii=False) + '\n')
+        f.flush()
+    f.close()
 
 
 

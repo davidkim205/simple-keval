@@ -1,12 +1,9 @@
-from eval_kgrammar import get_wrong_count
-from eval_keval import get_score
-from collections import defaultdict
-
 import pandas as pd
 import numpy as np
 import argparse
 import json
-import os
+
+from pathlib import Path
 
 
 # Define a function to read from jsonl file
@@ -18,53 +15,6 @@ def read_jsonl(file_path):
     return data_list
 
 
-def group_files_by_testset(directory):
-    testset_results = defaultdict(list)
-    for file in os.listdir(directory):
-        if file.endswith('.jsonl'):
-            testset_name = file.split('__', 1)[0]
-            testset_results[testset_name].append(os.path.join(directory, file))
-    return testset_results
-
-
-def calculate_scores(files, keval_dir, kgrammar_dir):
-    scores = {}
-
-    for file in files:
-        dirname, filename = os.path.split(file)
-        model_name = filename.split('__')[1] + '/' + filename.split('__')[2].replace('.jsonl', '')
-        if model_name not in scores:
-            scores[model_name] = {}
-
-        prefix = 'GENQA' if filename.find('_genqa_') != -1 else 'QA' if filename.endswith('norag.jsonl') else 'RAGQA'
-
-        if dirname == keval_dir.rstrip('/'):
-            output_key = 'keval'
-            score_func = get_score
-        elif dirname == kgrammar_dir.rstrip('/'):
-            output_key = 'kgrammar'
-            score_func = get_wrong_count
-        else:
-            print('skip invalid directory name', dirname)
-            continue
-
-        scores[model_name][prefix + ' ' + output_key] = []
-
-        data = read_jsonl(file)
-        for line in data:
-            for pair in line['pairs']:
-                score = score_func(pair[output_key])
-                if score < 0:
-                    pass
-                elif output_key == 'keval': # 0~10 점수를 0~1 사이로 변경
-                    score = score * 0.1
-                elif output_key == 'kgrammar':
-                    score = 1 if score == 0 else 0 # wrong count 0이면 1점
-                scores[model_name][prefix + ' ' + output_key].append(score)
-
-    return scores
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--keval', type=str, default='results_keval/')
@@ -72,42 +22,59 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    testset_results = defaultdict(list)
+    # keval 집계
+    keval_scores = []
+    for file in Path(args.keval).glob('*__keval.jsonl'):
+        model, testset = file.stem.split('__')[:2]
+        df = pd.read_json(file, orient='records', lines=True)
+        df = pd.json_normalize(df['pairs'].explode())
 
-    # group by testset
-    for directory in [args.keval, args.kgrammar]:
-        for testset_name, files in group_files_by_testset(directory).items():
-            testset_results[testset_name].extend(files)
-            testset_results[testset_name].sort()
-    # print(json.dumps(testset_results, indent=4))
+        keval = df['keval'].str.extract(r"\[\[(\d+\.?\d*)\]\]")[0]
+        # backup
+        keval[keval.isna()] = df.loc[keval.isna(), 'keval'].str.extract(r"\[(\d+\.?\d*)\]")[0]
+    
+        keval = keval.dropna().astype(float)
+        score = keval.mean() / 10
+        count = keval.count()
 
-    for testset, files in testset_results.items():
-        scores = calculate_scores(files, args.keval, args.kgrammar)
+        keval_scores.append({
+            'testset': testset,
+            'model': model,
+            'keval_score': score,
+            'keval': f"{score:.2f} ({count})"
+        })
+    keval_score_df = pd.DataFrame(keval_scores)
 
-        result = []
-        for model, score in scores.items():
-            average = {}
-            for k, v in score.items():
-                average[k] = np.mean(v)
-            result.append(average)
+    # kgrammar 집계
+    kgrammar_scores = []
+    for file in Path(args.kgrammar).glob('*__kgrammar.jsonl'):
+        model, testset = file.stem.split('__')[:2]
+        df = pd.read_json(file, orient='records', lines=True)
+        df = pd.json_normalize(df['pairs'].explode())
+        
+        kgrammar = df['kgrammar'].str.extract(r"<wrong count>\s*(\d+)\s*</wrong count>")[0]
+        kgrammar = kgrammar.dropna().astype(int)
+        
+        score = (kgrammar == 0).mean()
+        count = kgrammar.count()
 
-        df = pd.DataFrame(result, index=scores.keys())
-        rag_df = df.loc[:, df.columns.str.contains('RAG')]
-        if rag_df.empty:
-            df.insert(0, 'average', df.mean(axis=1))
-            print("\n\n# Testset:", testset, '\n')
-            print('## GENQA')
-            print(df.sort_values(by='average', ascending=False).to_markdown(floatfmt='.2f'))
-        else:
-            df = df.loc[:, ~df.columns.str.contains('RAG')]
-            rag_df.insert(0, 'average', rag_df.mean(axis=1))
-            df.insert(0, 'average', df.mean(axis=1))
-            print("\n\n# Testset:", testset, '\n')
-            print('## NORAG')
-            print(df.sort_values(by='average', ascending=False).to_markdown(floatfmt='.2f'))
-            print()
-            print('## RAG')
-            print(rag_df.sort_values(by='average', ascending=False).to_markdown(floatfmt='.2f'))
+        kgrammar_scores.append({
+            'testset': testset,
+            'model': model,
+            'kgrammar_score': score,
+            'kgrammar': f"{score:.2f} ({count})"
+        })
+    kgrammar_score_df = pd.DataFrame(kgrammar_scores)
+
+    # 통합
+    score_df = pd.merge(keval_score_df, kgrammar_score_df, on=['testset', 'model'])
+    score_df['average'] = score_df[['keval_score', 'kgrammar_score']].mean(axis=1)
+    score_df = score_df[['testset', 'model', 'average', 'keval', 'kgrammar']]
+    
+    # 출력
+    for testset, df in score_df.groupby(by='testset', sort=False):
+        print("\n\n# Testset:", testset, '\n')
+        print(df.drop(columns='testset').sort_values(by='average', ascending=False).to_markdown(floatfmt='.2f'))
 
 
 if __name__ == "__main__":

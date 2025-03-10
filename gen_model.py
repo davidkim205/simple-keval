@@ -48,15 +48,18 @@ def main():
     for index, item in tqdm(enumerate(data_list), total=len(data_list)):
         if index >= args.num_samples:
             break
-        
-        conversation = []
-        for pair in item["pairs"]:
-            conversation.append({"role": "user", "content": pair['prompt']})
-            print(conversation)
+        item['pairs'] = item['pairs'][:1] # single-turn
+
+        for pair in item["pairs"]: 
+            conversation = [
+                {
+                    "role": "user",
+                    "content": pair['prompt']
+                }
+            ]
             outputs = llm.chat(messages=conversation, sampling_params=sampling_params)
             answer = outputs[0].outputs[0].text
             pair["gen"] = answer
-            conversation.append({"role": "assistant", "content": answer})
 
         f.write(json.dumps(item, ensure_ascii=False) + '\n')
         f.flush()
