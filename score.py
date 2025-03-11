@@ -1,18 +1,7 @@
 import pandas as pd
-import numpy as np
 import argparse
-import json
 
 from pathlib import Path
-
-
-# Define a function to read from jsonl file
-def read_jsonl(file_path):
-    data_list=[]
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            data_list.append(json.loads(line))
-    return data_list
 
 
 def main():
