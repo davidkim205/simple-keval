@@ -52,7 +52,7 @@ python gen_model.py [model] [--repo davidkim205/ko-bench] [--data pairs_ko_quest
 ### 2. kgrammar judge
 kgrammar는 문법적인 측면에서 한국어 답변의 문맥이 자연스러운지 평가하고 오류를 탐지한다.
 탐지한 오류의 개수를 정량적인 평가지표로 사용한다.
-kgrammar judge 모델을 정량평가한 테스트 데이터셋은 아래에 공개되어 있다.
+kgrammar judge를 평가할 테스트 데이터셋은 아래에 공개되어 있다.
 https://huggingface.co/datasets/davidkim205/kgrammar-testset
 
 ```
@@ -85,7 +85,7 @@ python eval_kgrammar.py [--data results/ko-gemma-2-9b-it-v2__pairs_ko_question__
 ### 3. keval judge
 
 keval은 한국어 답변의 정성적인 품질을 분석하고 정량적으로 점수를 측정하여 평가지표로 사용한다.
-keval judge 모델을 정량평가한 테스트 데이터셋은 아래에 공개되어 있다.
+keval judge를 평가할 테스트 데이터셋은 아래에 공개되어 있다.
 https://huggingface.co/datasets/davidkim205/keval-testset
 
 ```
