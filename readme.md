@@ -89,7 +89,7 @@ keval judge를 평가할 테스트 데이터셋은 아래에 공개되어 있다
 https://huggingface.co/datasets/davidkim205/keval-testset
 
 ```
-python gen_model.py [--data results/ko-gemma-2-9b-it-v2__pairs_ko_question__result.jsonl] [--model davidkim205/keval-2-9b] [--output results_keval/]
+python eval_keval.py [--data results/ko-gemma-2-9b-it-v2__pairs_ko_question__result.jsonl] [--model davidkim205/keval-2-9b] [--output results_keval/]
 ```
 
 인자는 아래와 같다.
@@ -114,9 +114,9 @@ python gen_model.py [--data results/ko-gemma-2-9b-it-v2__pairs_ko_question__resu
   ]
 }
 ```
-    parser.add_argument('--keval', type=str, default='results_keval/')
-    parser.add_argument('--kgrammar', type=str, default='results_kgrammar/')
+
 ### 4. aggregate
+
 평가한 모델의 keval, kgrammar 점수를 확인한다.
 
 ```
