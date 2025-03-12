@@ -17,8 +17,8 @@ def read_jsonl(file_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default='results/ko-gemma-2-9b-it-v2__pairs_ko_question__result.jsonl')
-    parser.add_argument("--model", type=str, default='davidkim205/kgrammar-2-9b', help="kgrammar model")
+    parser.add_argument('--data', type=str, default='results/gemma-2-9b-it__pairs_ko_question__result.jsonl')
+    parser.add_argument("--model", type=str, default='davidkim205/kgrammar-2-1b', help="kgrammar model")
     parser.add_argument('--output', type=str, default='results_kgrammar/')
     args = parser.parse_args()
     print(args)
