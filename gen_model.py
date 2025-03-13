@@ -9,23 +9,21 @@ from datasets import load_dataset
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("model", type=str, help="model name")
-    parser.add_argument('--repo', type=str, default='davidkim205/ko-bench')
-    parser.add_argument('--data', type=str, default='pairs_ko_question.jsonl')
+    parser.add_argument("model", type=str, help="model path")
+    parser.add_argument('--data', type=str, default='davidkim205/ko-bench')
     parser.add_argument('--num_samples', default=10000, type=int, help='num samples')
     parser.add_argument('--output', type=str, default='results/')
 
     args = parser.parse_args()
     print(args)
 
-    data_list = load_dataset(args.repo, data_files=args.data)['train'].to_list()
-    print(f'Load {args.repo}/{args.data}', '\n')
+    data_list = load_dataset(args.data)['train'].to_list()
+    print(f'Load {args.data} testset', '\n')
 
     output_path = Path(args.output)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # {output_dir}/{modelname}__{testset}__result.jsonl
-    output_file_path = output_path / (args.model.split('/')[-1] + '__' + args.data.split('/')[-1].replace('.jsonl', '') + '__' + 'result.jsonl')
+    output_file_path = output_path / ('__'.join(args.model.split('/')) + '__result.jsonl')
     print('Output Path:', output_file_path, '\n')
 
     llm = LLM(model=args.model, max_model_len=4096)
