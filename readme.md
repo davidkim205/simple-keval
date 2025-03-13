@@ -376,7 +376,7 @@ If our project has been helpful for evaluating LLMs, please consider citing the 
 ```
 @misc{kim2025keval,
   title={keval and kgrammar: Offline-Ready Evaluation Frameworks for Korean AI Models},
-  author={David Kim and Hailey Lim and Eric Jung and Sierra Ho},
+  author={Changyeon Kim and Yehee Lim and Bumsu Jung and Yeonsu Ho},
   year={2025},
   howpublished={Online; accessed via a company blog},
   url={https://davidkim205.github.io/keval.html}
