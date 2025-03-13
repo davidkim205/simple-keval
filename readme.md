@@ -6,13 +6,16 @@ Ko-Bench is a localized set of questions derived from MT-bench, aimed at providi
 
 The evaluation leverages the keval and kgrammar models, focusing on two aspects: keval examines whether the response is appropriate and accurate, while kgrammar identifies any grammatical errors in the response. Both models work to quantify and measure the quality of the responses.
 
+| [**Model**](https://huggingface.co/collections/davidkim205/keval-2-67ac5400f5eef4984cc5dbbb) | [**Paper**](https://davidkim205.github.io/keval.html) | [**Code**](https://github.com/davidkim205/simple-keval) |
+
+| [**Space(keval)**](https://huggingface.co/spaces/davidkim205/keval-2) | [**Space(kgrammar)**](https://huggingface.co/spaces/davidkim205/kgrammar-2) | [**Dataset(keval)**](https://huggingface.co/datasets/davidkim205/keval-testset) | [**Dataset(kgrammar)**](https://huggingface.co/datasets/davidkim205/kgrammar-testset) |
+
 ## Contents
 
 - [Installation](#installation)
 - [Keval](#keval)
 - [Datasets](#datasets)
 - [Models](#models)
-- [Judgement Model Evaluation](#judgement-model-evaluation)
 - [Citation](#citation)
 
 ## Installation
@@ -27,30 +30,29 @@ conda activate simple-keval
 pip install -r requirements.txt
 ```
 
-## Ko-Bench
+## Keval
 
 ### Step 1. Generate model answers
 
 Generate the answers for the Ko-Bench testset.
 
 ```
-python gen_model.py [MODEL] --repo [REPO] --data [DATA] --num_samples [NUM_SAMPLES] --output [OUTPUT]
+python gen_model.py [MODEL] --data [DATA] --num_samples [NUM_SAMPLES] --output [OUTPUT]
 ```
 
 - **Parameters**:
   - `[MODEL]`: Path to the model. Local folder or Hugging Face repo ID.
-  - `[REPO]`: Path to the testset. Local folder or Hugging Face repo ID.
-  - `[DATA]`: Path to the testset filename.
+  - `[DATA]`: Path to the testset. Local folder or Hugging Face repo ID.
   - `[NUM_SAMPLES]`: Number of samples to extract (ordered).
   - `[OUTPUT]`: Directory for results.
 
 e.g.,
 
 ```
-python gen_model.py google/gemma-2-9b-it --repo davidkim205/ko-bench --data pairs_ko_question.jsonl --num_samples 10000 --output results/
+python gen_model.py google/gemma-2-9b-it --data davidkim205/ko-bench --num_samples 10000 --output results/
 ```
 
-The answers are saved in `results/[MODEL]__[DATA]__result.jsonl`, where `[DATA]` is without the file extension.
+The answers are saved in `results/google__gemma-2-9b-it__result.jsonl`
 
 ### Step 2. Generate kgrammar judgements
 
@@ -69,10 +71,10 @@ python eval_kgrammar.py --data [DATA] --model [MODEL] --output [OUTPUT]
 e.g.,
 
 ```
-python eval_kgrammar.py --data results/gemma-2-9b-it__pairs_ko_question__result.jsonl --model davidkim205/kgrammar-2-1b --output results_kgrammar/
+python eval_kgrammar.py --data results/google__gemma-2-9b-it__result.jsonl --model davidkim205/kgrammar-2-1b --output results_kgrammar/
 ```
 
-The answers are saved in `results_kgrammar/[MODEL]__[DATA]__kgrammar.jsonl`
+The answers are saved in `results_kgrammar/google__gemma-2-9b-it__kgrammar.jsonl`
 
 ### Step 3. Generate keval judgements
 
@@ -90,10 +92,10 @@ python eval_keval.py --data [DATA] --model [MODEL] --output [OUTPUT]
 e.g.,
 
 ```
-python eval_keval.py --data results/gemma-2-9b-it__pairs_ko_question__result.jsonl --model davidkim205/keval-2-1b --output results_keval/
+python eval_keval.py --data results/google__gemma-2-9b-it__result.jsonl --model davidkim205/keval-2-1b --output results_keval/
 ```
 
-The answers are saved in `results_keval/[MODEL]__[DATA]__keval.jsonl`
+The answers are saved in `results_keval/google__gemma-2-9b-it__keval.jsonl`
 
 ### Step 4. Show Ko-Bench scores
 
@@ -132,242 +134,6 @@ We provide an open model for judgment, and access to the 9b model can be request
 - [kgrammar-2-1b](https://huggingface.co/davidkim205/kgrmmar-2-1b)
 - [kgrammar-2-3b](https://huggingface.co/davidkim205/kgrmmar-2-3b)
 - [kgrammar-2-9b](https://huggingface.co/davidkim205/kgrmmar-2-9b) *(requires approval)*
-
-## Judgement Model Evaluation
-
-### keval
-
-The evaluation dataset consists of 22 samples, with two samples selected for each score from 0 to 10 in the training data. The keval model was assessed using two key metrics: Diff and Accuracy. keval was developed in three different sizes—1B, 3B, and 9B—and even the smaller models (1B and 3B) demonstrated performance comparable to the 9B model. For the baseline comparison in evaluating keval, we used GPT-4o and GPT-4o-mini.
-
-#### Diff
-
-**Diff** is a metric that represents the difference between the labeled score and the predicted score.
-- wrong: A metric that indicates the number of incorrectly formatted responses.
-- length: A metric that refers to the total number of test data points.
-
-The column names (0–10) represent the difference (n) between the labeled score and the predicted score, with the corresponding values showing the count and proportion of samples with that difference.
-
-##### Score Calculation
-
-The score is calculated based on how closely the predicted score matches the labeled score:
-
-1. Compute the difference between the Ko-Bench label score and the predicted score for each sample.
-2. Assign points based on the difference:
-   - A difference of **0** → **1 point**  
-   - A difference of **1** → **0.5 points**  
-   - Any other difference → **0 points** 
-3. Compute the final score as:
-   - **score** = (total points) / (length)
-
-This metric provides a normalized measure of the model’s evaluation accuracy, with higher scores indicating better alignment with human-labeled judgments.
-
-|    | model       | wrong    | score   |   length | 0          | 1          | 2         | 3         | 4        | 5        | 6        | 7        |   8 |   9 | 10       |
-|---:|:------------|:---------|:--------|---------:|:-----------|:-----------|:----------|:----------|:---------|:---------|:---------|:---------|----:|----:|:---------|
-|  0 | keval-2-9b  | 0 (0.0%) | 61.4%   |       22 | 11 (50.0%) | 5 (22.7%)  | 2 (9.1%)  | 3 (13.6%) | 0        | 0        | 0        | 0        |   0 |   0 | 1 (4.5%) |
-|  1 | keval-2-3b  | 0 (0.0%) | 59.1%   |       22 | 10 (45.5%) | 6 (27.3%)  | 4 (18.2%) | 2 (9.1%)  | 0        | 0        | 0        | 0        |   0 |   0 | 0        |
-|  2 | gpt-4o      | 0 (0.0%) | 54.5%   |       22 | 7 (31.8%)  | 10 (45.5%) | 2 (9.1%)  | 2 (9.1%)  | 1 (4.5%) | 0        | 0        | 0        |   0 |   0 | 0        |
-|  3 | keval-2-1b  | 0 (0.0%) | 43.2%   |       22 | 8 (36.4%)  | 3 (13.6%)  | 5 (22.7%) | 2 (9.1%)  | 1 (4.5%) | 0        | 1 (4.5%) | 0        |   0 |   0 | 2 (9.1%) |
-|  4 | gpt-4o-mini | 1 (4.5%) | 36.4%   |       22 | 4 (18.2%)  | 8 (36.4%)  | 4 (18.2%) | 3 (13.6%) | 0        | 1 (4.5%) | 0        | 1 (4.5%) |   0 |   0 | 0        |
-
-#### Accuracy
-
-**Accuracy** measures the ratio of correct predictions to the total predictions.
-
-- score: A metric represents the proportion of correctly predicted labels, calculated as the number of correct predictions divided by the total dataset size.
-- wrong: A metric indicates the number and proportion of responses with incorrect formatting.  
-
-The column names (0–10) correspond to Ko-Bench scores, with each value representing the count and percentage of correctly predicted scores for that label. A higher score indicates a greater alignment between the model's predictions and the ground truth labels.
-
-|    | model       | wrong    | score   |   length | 0          | 1         | 2          | 3         | 4          | 5         | 6         | 7         | 8         | 9         | 10         |
-|---:|:------------|:---------|:--------|---------:|:-----------|:----------|:-----------|:----------|:-----------|:----------|:----------|:----------|:----------|:----------|:-----------|
-|  0 | keval-2-9b  | 0 (0.0%) | 50.0%   |       22 | 1 (50.0%)  | 1 (50.0%) | 2 (100.0%) | 0         | 2 (100.0%) | 0         | 0         | 1 (50.0%) | 1 (50.0%) | 1 (50.0%) | 2 (100.0%) |
-|  1 | keval-2-3b  | 0 (0.0%) | 45.5%   |       22 | 2 (100.0%) | 1 (50.0%) | 0          | 0         | 2 (100.0%) | 1 (50.0%) | 0         | 1 (50.0%) | 1 (50.0%) | 0         | 2 (100.0%) |
-|  2 | keval-2-1b  | 0 (0.0%) | 36.4%   |       22 | 0          | 1 (50.0%) | 2 (100.0%) | 0         | 1 (50.0%)  | 0         | 1 (50.0%) | 0         | 0         | 1 (50.0%) | 2 (100.0%) |
-|  3 | gpt-4o      | 0 (0.0%) | 31.8%   |       22 | 2 (100.0%) | 0         | 0          | 1 (50.0%) | 0          | 1 (50.0%) | 0         | 0         | 1 (50.0%) | 0         | 2 (100.0%) |
-|  4 | gpt-4o-mini | 1 (4.5%) | 18.2%   |       22 | 2 (100.0%) | 0         | 0          | 0         | 0          | 0         | 0         | 0         | 1 (50.0%) | 0         | 1 (50.0%)  |
-
-#### Comparison of GPT and keval Evaluation Results  
-
-GPT performs well in evaluating the accuracy and usefulness of model responses in terms of content. However, when the input text includes code or mathematical expressions that cannot be properly represented in Korean, it tends to mistakenly identify them as errors. 
-
-The following is an actual test result. Although the response from the Korean AI model contains no English expressions except for code, GPT-4o incorrectly evaluated it as being written in English and assigned a score of zero due to a mismatch in response language.
-
-**Response from the Korean AI Model**  
-```
-[어시스턴트 답변의 시작]
-네, 이 함수에는 몇 가지 버그가 있습니다:
-
-1. 인덱싱이 잘못되었습니다: `str1[i - 1]`과 `str2[j - 1]`은 문자열의 마지막 요소가 아닌 첫 번째 요소에 대해 계산됩니다. 올바른 인덱싱은 `str1[i - 1]`과 `str2[j - 1]`이 되어야 합니다.
-
-2. 초기화가 잘못되었습니다: `dp` 테이블의 첫 번째 행과 첫 번째 열은 0이 아닌 1로 초기화되어야 합니다. 이는 첫 번째 문자열 또는 두 번째 문자열의 첫 번째 문자와 비교할 때 공통 부분 수열의 길이가 1이기 때문입니다.
-
-3. 최대값을 찾는 방법이 잘못되었습니다: 현재 구현에서는 `dp[i - 1][j]`와 `dp[i][j - 1]` 중 최대값을 찾습니다. 하지만 이 경우 `dp[i - 1][j]`와 `dp[i][j - 1]`가 아닌 `dp[i - 1][j - 1]`의 값이 이전 비교에서 업데이트되었을 수 있으므로 올바른 값이 아닙니다.
-
-다음은 수정된 버전의 함수입니다:
-
-\```python
-def longest_common_subsequence_length(str1, str2):
- m = len(str1)
- n = len(str2)
-
- dp = [[0] * (n + 1) for _ in range(m + 1)]
-
- for i in range(1, m + 1):
-  dp[i][0] = dp[i - 1][0]
-
- for j in range(1, n + 1):
-  dp[0][j] = dp[0][j - 1]
-
- for i in range(1, m + 1):
-  for j in range(1, n + 1):
-   if str1[i - 1] == str2[j - 1]:
-    dp[i][j] = dp[i - 1][j - 1] + 1
-   else:
-    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
-
- return dp[m][n]
-\```
-
-이 수정된 버전은 올바른 인덱싱, 초기화 및 최대값을 찾는 방법을 사용합니다. 이제 함수는 두 입력 문자열의 가장 긴 공통 부분 수열의 길이를 올바르게 계산합니다.
-[어시스턴트 답변의 끝] 
-```
-
-**GPT-4o Evaluation of the Korean AI Model's Response**
-```
-### 평가
-사용자 질문에서 요구한 사항은 "**함수에서 버그를 식별할 수 있나요?**"입니다. 이와 관련하여 어시스턴트의 응답과 참조 답변을 비교한 결과, 아래와 같은 관찰이 있습니다:
-
-1. **언어 일치 문제**  
-   질문과 참조 답변 모두 한국어로 작성되어 있지만, 어시스턴트의 답변은 영어로 작성되어 있습니다. 이로 인해 응답 언어가 일치하지 않아 평가 기준에 의해 점수가 0점이 됩니다.
-
-2. **정확성 문제**  
-   - 참조 답변은 함수에 버그가 없으며 코드가 올바르게 작성되었다고 명시하고 있습니다. 따라서, 오직 들여쓰기를 수정하는 것만으로 충분하며 다른 로직적 수정은 필요하지 않습니다.
-   - 하지만 어시스턴트는 여러 비합리적인 "버그"를 만들어냈습니다. 예를 들어:
-     - `dp` 테이블의 초기화에 대한 코멘트: 처음 열과 행이 `0`으로 초기화된 것이 버그라며 `1`로 초기화해야 한다고 주장했습니다. 이는 잘못된 수정입니다. LCS 알고리즘에서는 첫 번째 열과 첫 번째 행을 `0`으로 유지하는 것이 맞습니다.
-     - 잘못된 최대값 계산 주장: 현재 코드는 동적 프로그래밍 알고리즘의 원리를 따르며, 이미 `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`로 정확하게 구현되어 있습니다. 그러나 어시스턴트는 이 코드가 버그라고 잘못 진술했습니다.
-     - 불필요한 추가 작업 (`dp[i][0]` 및 `dp[0][j]`의 재초기화 부분)는 실제로 코드를 덜 효율적이게 만듭니다.
-
-3. **유용성 문제**  
-   어시스턴트의 수정된 코드는 불필요한 초기화 루프와 잘못된 논리를 포함하고 있어, 사용자가 혼란스러워할 가능성이 큽니다. 결과적으로, 어시스턴트의 답변은 문제 해결에서 유용하지 않았습니다.
-
----
-
-### 최종 평가
-어시스턴트의 답변은 질문에 대한 요구사항과 참조 답변의 설명에 크게 벗어났으며, 추가로 언어가 일치하지 않는 문제가 있었습니다. 올바른 평가 기준에 따라 점수는:
-
-Rating: [[0]]
-```
-
-**keval-2-9b Evaluation of the Korean AI Model's Response** 
-```
-어시스턴트의 답변은 주어진 함수에 문제가 있다고 주장하고 있습니다. 그러나 주어진 함수는 실제로 두 입력 문자열의 가장 긴 공통 부분 수열의 길이를 찾는 데 사용되는 동적 프로그래밍 접근 방식으로, 전반적으로 올바르게 구현되었습니다. 어시스턴트의 지적은 잘못된 부분이 있습니다.
-
-1. 인덱싱 문제: 어시스턴트는 인덱싱이 잘못되었다고 주장하지만, 주어진 함수에서 `str1[i - 1]`과 `str2[j - 1]`은 올바르게 사용되고 있습니다. 이는 동적 프로그래밍 테이블을 채우는 데 필요한 인덱싱입니다.
-
-2. 초기화 문제: 어시스턴트는 `dp` 테이블의 첫 번째 행과 열이 1로 초기화되어야 한다고 주장하지만, 이는 잘못된 지적입니다. LCS 문제에서 첫 번째 행과 열은 0으로 초기화되어야 하며, 이는 주어진 코드에서 올바르게 구현되었습니다.
-
-3. 최대값 찾기 문제: 어시스턴트는 최대값을 찾는 방법이 잘못되었다고 주장하지만, 주어진 코드에서 `dp[i - 1][j]`와 `dp[i][j - 1]` 중 최대값을 찾는 것은 올바른 접근 방식입니다. 이는 LCS 문제에서 현재 요소를 채울 때 이전 요소들과 비교하여 최대값을 선택하는 방식입니다.
-
-따라서 어시스턴트의 답변은 잘못된 지적을 포함하고 있으며, 주어진 함수는 올바르게 작동합니다.
-
-Rating: [[2]]
-```
-
-### kgrammar
-
-The evaluation dataset includes 80 examples: 40 general, 20 coding-related, and 20 math-related questions. For the baseline comparison in evaluating kgrammar, we used GPT-4o and GPT-4o-mini.
-
-#### Diff
-
-**Diff** refers to the difference between the label scores and predicted scores, represented as a score. Unlike keval, which calculates it based on Ko-Bench scores ranging from 0 to 10, kgrammar uses the number of detected errors(wrong count).
-
-- wrong: A metric that indicates the number of incorrectly formatted responses. 
-- length: A metric that refers to the total number of test data points.
-
-The "wrong" column in the table is different from the "wrong count" used in kgrammar. "Wrong" refers to formatting errors, while "wrong count" includes all errors present in a sentence. Other columns containing numbers indicate the count and percentage of differences between label and predicted scores for each value. 
-
-##### Score Calculation
-
-The score is calculated based on how closely the predicted wrong count matches the labeled wrong count:
-
-  1. Calculating the difference between the label and predicted value inside the <wrong count> tag for each pair.
-  2. Assigning full points for a difference of 0, and half a point for a difference of 1.
-  3. The total score is the sum of all points divided by the number of data points.
-  
-|    | model         | wrong    | score   |   length | 0          | 1          | 2          | 3        | 4        | 5        | 6        | 7        |   8 | 9        | 10       |   11 | 12       |
-|---:|:--------------|:---------|:--------|---------:|:-----------|:-----------|:-----------|:---------|:---------|:---------|:---------|:---------|----:|:---------|:---------|-----:|:---------|
-|  0 | kgrammar-2-9b | 0 (0.0%) | 77.5%   |       80 | 52 (65.0%) | 20 (25.0%) | 5 (6.2%)   | 1 (1.2%) | 1 (1.2%) | 0        | 1 (1.2%) | 0        |   0 | 0        | 0        |    0 | 0        |
-|  1 | kgrammar-2-3b | 0 (0.0%) | 74.4%   |       80 | 51 (63.7%) | 17 (21.2%) | 8 (10.0%)  | 1 (1.2%) | 1 (1.2%) | 0        | 1 (1.2%) | 1 (1.2%) |   0 | 0        | 0        |    0 | 0        |
-|  2 | kgrammar-2-1b | 1 (1.2%) | 67.5%   |       80 | 44 (55.0%) | 20 (25.0%) | 8 (10.0%)  | 2 (2.5%) | 2 (2.5%) | 1 (1.2%) | 0        | 2 (2.5%) |   0 | 0        | 0        |    0 | 0        |
-|  3 | gpt-4o        | 1 (1.2%) | 56.9%   |       80 | 34 (42.5%) | 23 (28.7%) | 14 (17.5%) | 3 (3.8%) | 2 (2.5%) | 2 (2.5%) | 0        | 0        |   0 | 0        | 0        |    0 | 1 (1.2%) |
-|  4 | gpt-4o-mini   | 0 (0.0%) | 44.4%   |       80 | 19 (23.8%) | 33 (41.2%) | 18 (22.5%) | 3 (3.8%) | 1 (1.2%) | 3 (3.8%) | 0        | 1 (1.2%) |   0 | 1 (1.2%) | 1 (1.2%) |    0 | 0        |
-
-#### Accuracy
-
-**Accuracy** measures the ratio of correct predictions to the total predictions.
-
-- score: A metric represents the proportion of correctly predicted labels, calculated as the number of correct predictions divided by the total dataset size.
-- wrong: A metric indicates the number and proportion of responses with incorrect formatting.  
-
-The column names (0–11) correspond to the wrong count labels in the kgrammar dataset, with each value representing the count and percentage of correctly predicted scores for that label. A higher score indicates a greater alignment between the model's predictions and the ground truth labels.
-
-|    | model         | wrong    | score   |   length | 0          | 1         | 2         | 3         | 4         | 5          | 6         | 7          |   8 |   9 |   10 |   11 |   12 |
-|---:|:--------------|:---------|:--------|---------:|:-----------|:----------|:----------|:----------|:----------|:-----------|:----------|:-----------|----:|----:|-----:|-----:|-----:|
-|  0 | kgrammar-2-9b | 0 (0.0%) | 65.0%   |       80 | 35 (97.2%) | 5 (71.4%) | 7 (50.0%) | 3 (37.5%) | 2 (40.0%) | 0          | 0         | 0          |   0 |   0 |    0 |    0 |    0 |
-|  1 | kgrammar-2-3b | 0 (0.0%) | 63.7%   |       80 | 35 (97.2%) | 2 (28.6%) | 8 (57.1%) | 3 (37.5%) | 2 (40.0%) | 1 (50.0%)  | 0         | 0          |   0 |   0 |    0 |    0 |    0 |
-|  2 | kgrammar-2-1b | 1 (1.2%) | 55.0%   |       80 | 34 (94.4%) | 3 (42.9%) | 4 (28.6%) | 2 (25.0%) | 0         | 0          | 1 (50.0%) | 0          |   0 |   0 |    0 |    0 |    0 |
-|  3 | gpt-4o        | 1 (1.2%) | 42.5%   |       80 | 9 (25.0%)  | 6 (85.7%) | 8 (57.1%) | 7 (87.5%) | 1 (20.0%) | 2 (100.0%) | 0         | 1 (100.0%) |   0 |   0 |    0 |    0 |    0 |
-|  4 | gpt-4o-mini   | 0 (0.0%) | 23.8%   |       80 | 1 (2.8%)   | 5 (71.4%) | 8 (57.1%) | 5 (62.5%) | 0         | 0          | 0         | 0          |   0 |   0 |    0 |    0 |    0 |
-
-#### Error Detection Accuracy
-
-**Error Detection Accuracy** evaluates a model's error detection performance by measuring how well it identifies the presence or absence of errors. It differs from conventional accuracy by focusing on correct and incorrect error predictions rather than overall classification correctness.
-
-The kgrammar models show strong error detection accuracy. The kgrammar-2-9b model performs best, with kgrammar-2-3b and kgrammar-2-1b following closely. This makes them reliable for precise grammatical evaluation.
-
-|   | model         | score | wrong | length |
-|--:|---------------|------:|------:|-------:|
-| 0 | kgrammar-2-9b | 95.0% |     0 |     80 |
-| 1 | kgrammar-2-3b | 93.8% |     0 |     80 |
-| 2 | kgrammar-2-1b | 92.5% |     1 |     80 |
-| 3 | gpt-4o        | 65.0% |     1 |     80 |
-| 4 | gpt-4o-mini   | 55.0% |     0 |     80 |
-
-#### Comparison of GPT and kgrammar Evaluation Results  
-
-Unlike keval, which focuses on evaluating content accuracy, usefulness, and creativity, kgrammar specializes in identifying grammatical errors in Korean sentences. These errors include not only spelling and spacing mistakes but also the presence of foreign expressions in Korean documents. GPT focuses more on content evaluation, making it less effective in filtering Korean grammatical errors—the main purpose of kgrammar.
-
-Below are the evaluation results of GPT-4o and kgrammar-2-9b for a document written entirely in Korean. While GPT replaces words with what it considers better expressions and counts the number of replacements rather than directly identifying errors, kgrammar-2-9b correctly determines that there are no incorrect Korean expressions in the text.
-
-
-**Input Text**
-```
-인보사 사건은 코오롱생명과학이 개발한 골관절염 유전자 치료제인 '인보사케이주'와 관련된 법적 문제를 일컫습니다. 이 사건은 처음에는 혁신적인 치료제로 주목받았으나, 나중에 임상시험 과정에서 성분 변경이 밝혀지며 논란이 촉발되었습니다.
-
-요약하자면, 인보사는 두 가지 성분을 혼합한 치료제인데, 그 중 하나가 예상치 못한 신장세포로 대체된 것이 드러났습니다. 이로 인해 암 발병 가능성 등 안전성 문제와 더불어 허가 과정에서의 자료 조작 및 은폐 혐의가 불거졌습니다. 한국 식약처와 미국 FDA의 조사 결과, 코오롱생명과학이 허위 자료를 제출한 정황이 밝혀졌습니다.
-
-이에 따라 관련 임원들이 기소되었으나, 최근 법원의 결정에 따라 상당수의 임원들이 보석금을 납부하고 석방된 상태입니다. 다만, 이우석 대표는 여전히 구속 상태로 남아 있으며 사건의 법적 절차는 아직 진행 중입니다. 이 사건은 의약품 허가 및 관리의 중요성을 다시 한번 환기시키며, 관련 규제와 법적 절차의 투명성에 대한 요구를 높입니다.
-```
-
-**GPT-4o Evaluation of the Input Text**
-```
-<incorrect grammar> - "인보사는 두 가지 성분을 혼합한 치료제인데, 그 중 하나가 예상치 못한 신장세포로 대체된 것이 드러났습니다."  
-(문맥상 '예상치 못한'이라는 표현 대신 '제조 과정에서 신장세포로 대체된 것이 드러났다'와 같은 명확한 문장으로 수정하는 것이 문맥적으로 자연스러움) </incorrect grammar>  
-<incorrect grammar> - "한국 식약처와 미국 FDA의 조사 결과..."  
-('한국 식약처'라는 표현 대신 정확한 공식 명칭인 '식품의약품안전처'로 표기하는 것이 더 적절함) </incorrect grammar>  
-<incorrect grammar> - "이에 따라 관련 임원들이 기소되었으나, 최근 법원의 결정에 따라 상당수의 임원들이 보석금을 납부하고 석방된 상태입니다."  
-('석방된 상태입니다'라는 표현은 다소 행정적 문맥에 부적합해 보이며, '임시 석방된 상태에 있습니다'라고 수정하는 것이 더 자연스러움) </incorrect grammar>  
-
-<wrong count> 3 </wrong count>
-```
-
-**kgrammar-2-9b Evaluation of the Input Text**
-```
-<incorrect grammar>이 문서에는 문맥상 부자연스러운 외국어 사용이 없습니다. 모든 내용이 자연스럽고 일관되게 한국어로 작성되어 있습니다.
-
-</incorrect grammar> <wrong count>0</wrong count>
-
-```
 
 ## Citation
 

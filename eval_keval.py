@@ -17,7 +17,7 @@ def read_jsonl(file_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default='results/gemma-2-9b-it__pairs_ko_question__result.jsonl')
+    parser.add_argument('--data', type=str, default='results/google__gemma-2-9b-it__result.jsonl')
     parser.add_argument("--model", type=str, default='davidkim205/keval-2-1b', help="keval model")
     parser.add_argument('--output', type=str, default='results_keval/')
     
