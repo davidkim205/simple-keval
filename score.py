@@ -14,7 +14,7 @@ def main():
     # keval 집계
     keval_scores = []
     for file in Path(args.keval).glob('*__keval.jsonl'):
-        model, testset = file.stem.split('__')[:2]
+        model = '__'.join(file.stem.split('__')[:2])
         df = pd.read_json(file, orient='records', lines=True)
         df = pd.json_normalize(df['pairs'].explode())
 
@@ -27,7 +27,6 @@ def main():
         count = keval.count()
 
         keval_scores.append({
-            'testset': testset,
             'model': model,
             'keval_score': score,
             'keval': f"{score:.2f} ({count})"
@@ -37,7 +36,7 @@ def main():
     # kgrammar 집계
     kgrammar_scores = []
     for file in Path(args.kgrammar).glob('*__kgrammar.jsonl'):
-        model, testset = file.stem.split('__')[:2]
+        model = '__'.join(file.stem.split('__')[:2])
         df = pd.read_json(file, orient='records', lines=True)
         df = pd.json_normalize(df['pairs'].explode())
         
@@ -48,7 +47,6 @@ def main():
         count = kgrammar.count()
 
         kgrammar_scores.append({
-            'testset': testset,
             'model': model,
             'kgrammar_score': score,
             'kgrammar': f"{score:.2f} ({count})"
@@ -56,14 +54,11 @@ def main():
     kgrammar_score_df = pd.DataFrame(kgrammar_scores)
 
     # 통합
-    score_df = pd.merge(keval_score_df, kgrammar_score_df, on=['testset', 'model'])
+    score_df = pd.merge(keval_score_df, kgrammar_score_df, on='model')
     score_df['average'] = score_df[['keval_score', 'kgrammar_score']].mean(axis=1)
-    score_df = score_df[['testset', 'model', 'average', 'keval', 'kgrammar']]
-    
-    # 출력
-    for testset, df in score_df.groupby(by='testset', sort=False):
-        print("\n\n# Testset:", testset, '\n')
-        print(df.drop(columns='testset').sort_values(by='average', ascending=False).to_markdown(floatfmt='.2f'))
+    score_df = score_df[['model', 'average', 'keval', 'kgrammar']]
+
+    print(score_df.sort_values(by='average', ascending=False).to_markdown(index=False, floatfmt='.2f'))
 
 
 if __name__ == "__main__":
