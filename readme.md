@@ -76,17 +76,17 @@ Trained on the Ko-bench dataset, inspired by MT-bench, tailored for Korean lingu
    ```
 
 ```
-| model                                             |   average | keval     | kgrammar   |
-|:--------------------------------------------------|----------:|:----------|:-----------|
-| davidkim205__ko-gemma-2-9b-it-v2                  |      0.75 | 0.60 (80) | 0.90 (78)  |
-| rtzr__ko-gemma-2-9b-it                            |      0.74 | 0.59 (80) | 0.89 (80)  |
-| NCSOFT__Llama-VARCO-8B-Instruct                   |      0.74 | 0.62 (80) | 0.86 (79)  |
-| LGAI-EXAONE__EXAONE-3.5-7.8B-Instruct             |      0.73 | 0.58 (80) | 0.87 (79)  |
-| google__gemma-2-9b-it                             |      0.72 | 0.62 (79) | 0.81 (78)  |
-| MLP-KTLim__llama-3-Korean-Bllossom-8B             |      0.70 | 0.51 (80) | 0.88 (78)  |
-| KAERI-MLP__llama-3.1-Korean-AtomicGPT-Bllossom-8B |      0.70 | 0.55 (80) | 0.84 (77)  |
-| Qwen__Qwen2-7B-Instruct                           |      0.69 | 0.48 (80) | 0.89 (80)  |
-| dnotitia__Llama-DNA-1.0-8B-Instruct               |      0.57 | 0.42 (80) | 0.73 (77)  |
+| model                                            |   average | keval     | kgrammar   |
+|:-------------------------------------------------|----------:|:----------|:-----------|
+| davidkim205/ko-gemma-2-9b-it-v2                  |      0.75 | 0.60 (80) | 0.90 (78)  |
+| rtzr/ko-gemma-2-9b-it                            |      0.74 | 0.59 (80) | 0.89 (80)  |
+| NCSOFT/Llama-VARCO-8B-Instruct                   |      0.74 | 0.62 (80) | 0.86 (79)  |
+| LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct             |      0.73 | 0.58 (80) | 0.87 (79)  |
+| google/gemma-2-9b-it                             |      0.72 | 0.62 (79) | 0.81 (78)  |
+| MLP-KTLim/llama-3-Korean-Bllossom-8B             |      0.70 | 0.51 (80) | 0.88 (78)  |
+| KAERI-MLP/llama-3.1-Korean-AtomicGPT-Bllossom-8B |      0.70 | 0.55 (80) | 0.84 (77)  |
+| Qwen/Qwen2-7B-Instruct                           |      0.69 | 0.48 (80) | 0.89 (80)  |
+| dnotitia/Llama-DNA-1.0-8B-Instruct               |      0.57 | 0.42 (80) | 0.73 (77)  |
 ```
 
 ## Citation
@@ -96,7 +96,7 @@ If our project has been helpful for evaluating LLMs, please consider citing the 
 ```
 @misc{kim2025keval,
   title={keval and kgrammar: Offline-Ready Evaluation Frameworks for Korean AI Models},
-  author={Changyeon Kim and Yehee Lim and Bumsu Jung and Yeonsu Ho},
+  author={ChangYeon Kim and YeHee Lim and BumSu Jung and YeonSu Ho and YoungJun Hwang},
   year={2025},
   howpublished={Online; accessed via a company blog},
   url={https://davidkim205.github.io/keval.html}
