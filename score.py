@@ -14,7 +14,7 @@ def main():
     # keval 집계
     keval_scores = []
     for file in Path(args.keval).glob('*__keval.jsonl'):
-        model = '__'.join(file.stem.split('__')[:2])
+        model = '/'.join(file.stem.split('__')[:2])
         df = pd.read_json(file, orient='records', lines=True)
         df = pd.json_normalize(df['pairs'].explode())
 
@@ -36,7 +36,7 @@ def main():
     # kgrammar 집계
     kgrammar_scores = []
     for file in Path(args.kgrammar).glob('*__kgrammar.jsonl'):
-        model = '__'.join(file.stem.split('__')[:2])
+        model = '/'.join(file.stem.split('__')[:2])
         df = pd.read_json(file, orient='records', lines=True)
         df = pd.json_normalize(df['pairs'].explode())
         
